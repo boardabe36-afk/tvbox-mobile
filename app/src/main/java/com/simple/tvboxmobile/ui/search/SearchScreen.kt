@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,15 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.simple.tvbox.model.SpiderSite
-import com.simple.tvbox.model.VideoItem
-import com.simple.tvboxmobile.ui.search.SearchViewModel.SearchResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     onBack: () -> Unit,
-    onPlayItem: (SpiderSite, VideoItem) -> Unit,
+    onPlayItem: (com.simple.tvbox.model.SpiderSite, com.simple.tvbox.model.VideoItem) -> Unit,
     vm: SearchViewModel = viewModel()
 ) {
     val state by vm.state.collectAsState()
@@ -114,14 +112,14 @@ private fun CenteredProgress() {
 @Composable
 private fun NoResult(query: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("没有找到 “$query” 的相关结果", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("没有找到「$query」的相关结果", color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 private fun ResultList(
-    results: List<SearchResult>,
-    onPlayItem: (SpiderSite, VideoItem) -> Unit
+    results: List<SearchViewModel.SearchResult>,
+    onPlayItem: (com.simple.tvbox.model.SpiderSite, com.simple.tvbox.model.VideoItem) -> Unit
 ) {
     LazyColumn(
         contentPadding = PaddingValues(12.dp),
@@ -134,7 +132,7 @@ private fun ResultList(
 }
 
 @Composable
-private fun ResultRow(result: SearchResult, onClick: () -> Unit) {
+private fun ResultRow(result: SearchViewModel.SearchResult, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -157,18 +155,16 @@ private fun ResultRow(result: SearchResult, onClick: () -> Unit) {
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "${result.site.name}  · 匹配分 ${result.score}",
+                    "${result.site.name}  ·  匹配分 ${result.score}",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            IconButton(onClick = onClick) {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = "详情",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            Icon(
+                Icons.Default.PlayArrow,
+                contentDescription = "播放",
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

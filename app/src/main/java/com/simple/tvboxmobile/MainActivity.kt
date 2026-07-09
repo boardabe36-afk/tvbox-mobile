@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -42,7 +41,6 @@ private fun AppNav() {
     NavHost(navController = nav, startDestination = Screen.Home.route) {
         composable(Screen.Home.route) {
             HomeScreen(
-                onVideoClick = { _ -> /* TODO: 详情页 v1.1 */ },
                 onSettingsClick = { nav.navigate(Screen.Settings.route) },
                 onSearchClick = { nav.navigate(Screen.Search.route) }
             )
@@ -51,8 +49,8 @@ private fun AppNav() {
             SearchScreen(
                 onBack = { nav.popBackStack() },
                 onPlayItem = { site, video ->
-                    // 搜索结果直接播放（v1 简化：单击→搜索该剧详情）
-                    // TODO: v1.1 加详情页点击
+                    // 跳转到播放页，传递必要参数
+                    nav.navigate(Screen.Player.route(video.id, site.key, video.title))
                 }
             )
         }

@@ -2,28 +2,23 @@ package com.simple.tvboxmobile.ui.player
 
 import android.view.ViewGroup
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.simple.tvbox.model.SpiderSite
 import com.simple.tvbox.source.VideoClientFactory
 import com.simple.tvboxmobile.data.SourceAccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * ExoPlayer 播放页（v1 MVP：单视频，无选集）。
- *
- * 流程：
- *  1. 用 siteKey 找到对应的 SpiderSite
- *  2. 用 VideoClientFactory 创建 client
- *  3. client.fetchDetailInfo(videoId) -> PlayInfo.url
- *  4. ExoPlayer 播放
- */
 @Composable
 fun PlayerScreen(
     videoId: String,
@@ -31,46 +26,69 @@ fun PlayerScreen(
     title: String,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
     var playUrl by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(videoId, siteKey) {
+        loading = true
+        error = null
+        playUrl = null
         try {
             val repo = SourceAccess.repository()
-            // 找 site：SpiderSite.key == siteKey，但需要 sourceUrl 信息才能 locate
-            // 简单实现：直接用 siteKey 构造 SpiderSite 假设是 HTML 源
-            val fakeSite = com.simple.tvbox.model.SpiderSite(
-                key = siteKey,
-                name = title,
-                type = 1,
-                api = "html://$videoId"  // 临时 MVP 通道
-            )
-            val client = VideoClientFactory.create(fakeSite)
-            if (!client.isSupported()) {
-                error = "暂不支持的源类型"
+            // 从已加载的站点列表中找到对应的 site
+            val sites = repo.loadAllSites()
+            val site = sites.find { it.key == siteKey }
+            if (site == null) {
+                error = "找不到对应的视频源"
+                loading = false
                 return@LaunchedEffect
             }
-            val playInfo = withContext(Dispatchers.IO) {
-                val info = client.fetchDetailInfo(videoId)
-                info?.let {
-                    val url = it.optString("playUrl", "")
-                    if (url.isNotBlank()) url else null
-                }
+
+            val client = VideoClientFactory.create(site)
+            if (!client.isSupported()) {
+                error = "暂不支持的源类型"
+                loading = false
+                return@LaunchedEffect
             }
-            if (playInfo == null) {
+
+            val url = withContext(Dispatchers.IO) {
+                val info = client.fetchDetailInfo(videoId)
+                info?.optString("playUrl", "")
+            }
+            if (url.isNullOrBlank()) {
                 error = "无法解析播放地址"
             } else {
-                playUrl = playInfo
+                playUrl = url
             }
         } catch (t: Throwable) {
             error = t.message ?: "未知错误"
+        } finally {
+            loading = false
         }
     }
 
     BackHandler { onBack() }
 
     when {
+        loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(12.dp))
+                    Text("正在解析播放地址...")
+                }
+            }
+        }
+        error != null -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("播放失败: $error", color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = onBack) { Text("返回") }
+                }
+            }
+        }
         playUrl != null -> {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
@@ -88,22 +106,6 @@ fun PlayerScreen(
                     }
                 }
             )
-        }
-        error != null -> {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                androidx.compose.material3.Text("播放失败: $error")
-            }
-        }
-        else -> {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                androidx.compose.material3.CircularProgressIndicator()
-            }
         }
     }
 }
