@@ -7,6 +7,7 @@ local.properties
 .idea/
 *.iml
 .vscode/
+.kotlin/
 
 # Kotlin/Android
 *.class
@@ -15,10 +16,22 @@ local.properties
 *.aab
 captures/
 
-# Build outputs
+# Build outputs - never commit APKs or build artifacts
 app/release/
 app/debug/
 releases/
+*.apk
+
+# Old TV project artifacts (from copy) - ignore all of these!
+build-fixes/
+screenshots/
+*.learnings/
+docs/
+release-notes-*.md
+tvbox-simple-*.apk
+tvbox-simple-*.keystore
+assemble-release.cmd
+build.ps1
 
 # Logs
 *.log
@@ -26,3 +39,6 @@ releases/
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets
+keystore.properties
