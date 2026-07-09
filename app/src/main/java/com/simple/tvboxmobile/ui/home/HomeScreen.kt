@@ -30,6 +30,7 @@ fun HomeScreen(
     onSearchClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onDoubanClick: (String) -> Unit,
+    onCategoryClick: (String, String, String) -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
     val state by vm.state.collectAsState()
@@ -37,23 +38,23 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("视频盒子", fontWeight = FontWeight.SemiBold) },
+                title = { Text("TVBox", fontWeight = FontWeight.SemiBold) },
                 actions = {
                     IconButton(onClick = onHistoryClick) {
-                        Icon(Icons.Default.History, contentDescription = "历史")
+                        Icon(Icons.Default.History, contentDescription = "History")
                     }
                     IconButton(onClick = onSearchClick) {
-                        Icon(Icons.Default.Search, contentDescription = "搜索")
+                        Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = "设置")
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onSearchClick) {
-                Icon(Icons.Default.Search, contentDescription = "搜索")
+                Icon(Icons.Default.Search, contentDescription = "Search")
             }
         }
     ) { padding ->
@@ -65,22 +66,51 @@ fun HomeScreen(
         ) {
             item { BannerCard(sourcesCount = state.sources.size) }
 
+            // Source categories
+            if (state.sourceCategories.isNotEmpty()) {
+                item {
+                    SectionHeader("Categories")
+                }
+                state.sourceCategories.forEach { sc ->
+                    item {
+                        Text(
+                            sc.siteName,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+                    item {
+                        CategoryChips(
+                            categories = sc.categories,
+                            onClick = { cat ->
+                                onCategoryClick(sc.siteKey, cat.id, cat.name)
+                            }
+                        )
+                    }
+                }
+                item { Spacer(Modifier.height(8.dp)) }
+            }
+
+            // Douban movies
             if (state.doubanMovies.isNotEmpty()) {
                 item {
-                    SectionHeader("热门电影")
+                    SectionHeader("Hot Movies")
                     DoubanRow(items = state.doubanMovies, onClick = { onDoubanClick(it) })
                 }
             }
 
+            // Douban TV
             if (state.doubanTvs.isNotEmpty()) {
                 item {
-                    SectionHeader("热门剧集")
+                    SectionHeader("Hot TV Series")
                     DoubanRow(items = state.doubanTvs, onClick = { onDoubanClick(it) })
                 }
             }
 
+            // Sources list
             item {
-                SectionHeader("视频源 (${state.sources.size})", onClick = onSettingsClick)
+                SectionHeader("Sources (${state.sources.size})", onClick = onSettingsClick)
             }
 
             if (state.isLoading) {
@@ -106,11 +136,11 @@ private fun BannerCard(sourcesCount: Int) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("海量影视  跨源聚合", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+            Text("TVBox Mobile", fontSize = 22.sp, fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary)
             Text(
-                if (sourcesCount == 0) "去设置添加你的第一个视频源"
-                else "已配置 $sourcesCount 个视频源，点击搜索开始观看",
+                if (sourcesCount == 0) "Go to Settings to add your first video source"
+                else "Configured $sourcesCount video sources. Tap search to start watching.",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
             )
@@ -126,7 +156,26 @@ private fun SectionHeader(title: String, onClick: () -> Unit = {}) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        TextButton(onClick = onClick) { Text("更多 >") }
+        TextButton(onClick = onClick) { Text("More >") }
+    }
+}
+
+@Composable
+private fun CategoryChips(
+    categories: List<com.simple.tvbox.model.VideoCategory>,
+    onClick: (com.simple.tvbox.model.VideoCategory) -> Unit
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(categories) { cat ->
+            AssistChip(
+                onClick = { onClick(cat) },
+                label = { Text(cat.name) },
+                leadingIcon = { Icon(Icons.Default.Category, contentDescription = null, modifier = Modifier.size(16.dp)) }
+            )
+        }
     }
 }
 
@@ -168,7 +217,7 @@ private fun DoubanCard(item: DoubanService.DoubanItem, onClick: () -> Unit) {
         Text(item.title, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
             fontWeight = FontWeight.Medium)
         if (!item.rate.isNullOrBlank()) {
-            Text("评分 ${item.rate}", fontSize = 10.sp,
+            Text("Rating ${item.rate}", fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.primary)
         }
     }
@@ -207,14 +256,14 @@ private fun EmptySourceHint(onAdd: () -> Unit) {
         Icon(Icons.Default.MovieFilter, contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(64.dp))
         Spacer(Modifier.height(12.dp))
-        Text("还没有视频源", style = MaterialTheme.typography.titleMedium)
+        Text("No video sources yet", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text("点击下方按钮添加", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Tap the button below to add", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))
         Button(onClick = onAdd) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("添加视频源")
+            Text("Add Source")
         }
     }
 }

@@ -46,3 +46,9 @@
 
 # Keep DoubanService + DoubanItem (Gson reflection)
 -keep class com.simple.tvbox.source.DoubanService** { *; }
+
+
+# Coil image loading library
+-keep class coil.** { *; }
+-dontwarn coil.**
+-keep class coil.compose.** { *; }

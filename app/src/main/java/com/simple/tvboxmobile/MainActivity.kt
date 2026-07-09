@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.simple.tvboxmobile.ui.category.CategoryScreen
 import com.simple.tvboxmobile.ui.detail.DetailScreen
 import com.simple.tvboxmobile.ui.history.HistoryScreen
 import com.simple.tvboxmobile.ui.home.HomeScreen
@@ -43,10 +44,13 @@ private fun AppNav() {
         composable(Screen.Home.route) {
             HomeScreen(
                 onSettingsClick = { nav.navigate(Screen.Settings.route) },
-                onSearchClick = { nav.navigate(Screen.searchRoute()) },
+                onSearchClick = { nav.navigate(Screen.Search.searchRoute()) },
                 onHistoryClick = { nav.navigate(Screen.History.route) },
                 onDoubanClick = { title ->
-                    nav.navigate(Screen.searchRoute(title))
+                    nav.navigate(Screen.Search.searchRoute(title))
+                },
+                onCategoryClick = { siteKey, catId, catName ->
+                    nav.navigate(Screen.Category.route(siteKey, catId, catName))
                 }
             )
         }
@@ -81,6 +85,27 @@ private fun AppNav() {
                 onResume = { item ->
                     nav.navigate(Screen.Player.route(item.videoId ?: "", item.siteKey, item.title, item.episodeUrl))
                 }
+            )
+        }
+        composable(
+            Screen.Category.route,
+            arguments = listOf(
+                navArgument("siteKey") { type = NavType.StringType },
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("categoryName") { type = NavType.StringType }
+            )
+        ) { entry ->
+            val siteKey = java.net.URLDecoder.decode(entry.arguments?.getString("siteKey") ?: "", "UTF-8")
+            val categoryId = java.net.URLDecoder.decode(entry.arguments?.getString("categoryId") ?: "", "UTF-8")
+            val categoryName = java.net.URLDecoder.decode(entry.arguments?.getString("categoryName") ?: "", "UTF-8")
+            CategoryScreen(
+                siteKey = siteKey,
+                categoryId = categoryId,
+                categoryName = categoryName,
+                onItemClick = { video ->
+                    nav.navigate(Screen.Detail.route(video.id, siteKey, video.title))
+                },
+                onBack = { nav.popBackStack() }
             )
         }
         composable(
