@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 移动端颜色（Compose Material 3 主导控制） -->
+    <color name="mobile_background">#FF0F1014</color>
+    <color name="mobile_card_background">#FF1A1B22</color>
+    <color name="mobile_primary">#FF4F8EF7</color>
+    <color name="mobile_on_primary">#FFFFFFFF</color>
+    <color name="mobile_secondary">#FFFF8A65</color>
+    <color name="mobile_text_primary">#FFEAEAEA</color>
+    <color name="mobile_text_secondary">#FFA0A0A8</color>
+    <color name="mobile_error">#FFEF5350</color>
+</resources>
