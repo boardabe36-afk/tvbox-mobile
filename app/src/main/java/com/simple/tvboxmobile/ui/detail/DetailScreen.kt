@@ -28,6 +28,11 @@ fun DetailScreen(
     onBack: () -> Unit,
     vm: DetailViewModel = viewModel()
 ) {
+    // CRITICAL: must use collectAsState() not .value, otherwise Compose won't recompose
+    val loading by vm.loading.collectAsState()
+    val error by vm.error.collectAsState()
+    val episodes by vm.episodes.collectAsState()
+
     LaunchedEffect(siteKey, videoId) { vm.load(siteKey, videoId) }
 
     Scaffold(
@@ -44,24 +49,24 @@ fun DetailScreen(
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             when {
-                vm.loading.value -> {
+                loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
-                vm.error.value != null -> {
+                error != null -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败: ${vm.error.value}", color = MaterialTheme.colorScheme.error)
+                        Text("加载失败: $error", color = MaterialTheme.colorScheme.error)
                     }
                 }
-                vm.episodes.value.isEmpty() -> {
+                episodes.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("没有可播放的剧集")
                     }
                 }
                 else -> {
                     Text(
-                        "共 ${vm.episodes.value.size} 集",
+                        "共 ${episodes.size} 集",
                         Modifier.padding(16.dp),
                         style = MaterialTheme.typography.titleSmall
                     )
@@ -71,7 +76,7 @@ fun DetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(vm.episodes.value) { (name, url) ->
+                        items(episodes) { (name, url) ->
                             EpisodeChip(
                                 name = name,
                                 onClick = { onPlayEpisode(url, title) }

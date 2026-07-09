@@ -43,3 +43,6 @@
 -keep class com.simple.tvbox.source.** { *; }
 -keep class com.simple.tvbox.model.** { *; }
 -keep class com.simple.tvbox.util.** { *; }
+
+# Keep DoubanService + DoubanItem (Gson reflection)
+-keep class com.simple.tvbox.source.DoubanService** { *; }

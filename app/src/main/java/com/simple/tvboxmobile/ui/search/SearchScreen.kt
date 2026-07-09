@@ -10,23 +10,35 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     onBack: () -> Unit,
     onPlayItem: (com.simple.tvbox.model.SpiderSite, com.simple.tvbox.model.VideoItem) -> Unit,
+    initialQuery: String = "",
     vm: SearchViewModel = viewModel()
 ) {
     val state by vm.state.collectAsState()
+
+    // Pre-fill query from douban click
+    LaunchedEffect(initialQuery) {
+        if (initialQuery.isNotBlank() && state.query.isBlank()) {
+            vm.setQuery(initialQuery)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -141,11 +153,32 @@ private fun ResultRow(result: SearchViewModel.SearchResult, onClick: () -> Unit)
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val poster = result.item.poster
+            if (!poster.isNullOrBlank()) {
+                AsyncImage(
+                    model = poster,
+                    contentDescription = result.item.title,
+                    modifier = Modifier.size(56.dp, 80.dp).clip(RoundedCornerShape(4.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.size(56.dp, 80.dp).clip(RoundedCornerShape(4.dp)),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Movie, contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                    }
+                }
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(result.item.title, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                Text(result.item.title, fontWeight = FontWeight.Medium, fontSize = 15.sp)
                 if (!result.item.subTitle.isNullOrBlank()) {
                     Text(
                         result.item.subTitle,

@@ -43,16 +43,33 @@ private fun AppNav() {
         composable(Screen.Home.route) {
             HomeScreen(
                 onSettingsClick = { nav.navigate(Screen.Settings.route) },
-                onSearchClick = { nav.navigate(Screen.Search.route) },
-                onHistoryClick = { nav.navigate(Screen.History.route) }
+                onSearchClick = { nav.navigate(Screen.searchRoute()) },
+                onHistoryClick = { nav.navigate(Screen.History.route) },
+                onDoubanClick = { title ->
+                    nav.navigate(Screen.searchRoute(title))
+                }
             )
         }
-        composable(Screen.Search.route) {
+        composable(
+            Screen.Search.route,
+            arguments = listOf(
+                navArgument("query") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
+            )
+        ) { entry ->
+            val query = entry.arguments?.getString("query") ?: ""
+            val decoded = if (query.isNotBlank()) {
+                runCatching { java.net.URLDecoder.decode(query, "UTF-8") }.getOrDefault(query)
+            } else ""
             SearchScreen(
                 onBack = { nav.popBackStack() },
                 onPlayItem = { site, video ->
                     nav.navigate(Screen.Detail.route(video.id, site.key, video.title))
-                }
+                },
+                initialQuery = decoded
             )
         }
         composable(Screen.Settings.route) {

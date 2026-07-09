@@ -33,6 +33,7 @@ fun PlayerScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
     var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
+    var siteApi by remember { mutableStateOf("") }
 
     val historyKey = "$siteKey:$videoId:$episodeUrl"
     val saved = remember { WatchHistoryStore.find(historyKey) }
@@ -46,6 +47,7 @@ fun PlayerScreen(
                 SourceAccess.repository().loadAllSites().find { it.key == siteKey }
             }
             if (site == null) { error = "找不到视频源"; loading = false; return@LaunchedEffect }
+            siteApi = site.api
             val client = VideoClientFactory.create(site)
             if (!client.isSupported()) { error = "不支持的源类型"; loading = false; return@LaunchedEffect }
 
@@ -63,7 +65,7 @@ fun PlayerScreen(
     }
 
     // Save position periodically
-    LaunchedEffect(playUrl) {
+    LaunchedEffect(playUrl, exoPlayer) {
         while (playUrl != null && exoPlayer != null) {
             delay(5000)
             exoPlayer?.let { p ->
@@ -107,9 +109,14 @@ fun PlayerScreen(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
+                    // Build MediaItem with headers (Referer + UA)
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(playUrl!!)
+                        .build()
+
                     PlayerView(ctx).apply {
                         val ep = ExoPlayer.Builder(ctx).build().apply {
-                            setMediaItem(MediaItem.fromUri(playUrl!!))
+                            setMediaItem(mediaItem)
                             prepare()
                             playWhenReady = true
                             // Resume from saved position

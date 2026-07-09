@@ -13,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.simple.tvbox.model.Source
 import com.simple.tvbox.source.DoubanService
 
@@ -27,6 +29,7 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
     onSearchClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onDoubanClick: (String) -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
     val state by vm.state.collectAsState()
@@ -64,15 +67,15 @@ fun HomeScreen(
 
             if (state.doubanMovies.isNotEmpty()) {
                 item {
-                    SectionHeader("热门电影", onClick = onSearchClick)
-                    DoubanRow(items = state.doubanMovies)
+                    SectionHeader("热门电影")
+                    DoubanRow(items = state.doubanMovies, onClick = { onDoubanClick(it) })
                 }
             }
 
             if (state.doubanTvs.isNotEmpty()) {
                 item {
-                    SectionHeader("热门剧集", onClick = onSearchClick)
-                    DoubanRow(items = state.doubanTvs)
+                    SectionHeader("热门剧集")
+                    DoubanRow(items = state.doubanTvs, onClick = { onDoubanClick(it) })
                 }
             }
 
@@ -128,29 +131,38 @@ private fun SectionHeader(title: String, onClick: () -> Unit = {}) {
 }
 
 @Composable
-private fun DoubanRow(items: List<DoubanService.DoubanItem>) {
+private fun DoubanRow(items: List<DoubanService.DoubanItem>, onClick: (String) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(items.take(10)) { item ->
-            DoubanCard(item)
+            DoubanCard(item, onClick = { onClick(item.title) })
         }
     }
 }
 
 @Composable
-private fun DoubanCard(item: DoubanService.DoubanItem) {
+private fun DoubanCard(item: DoubanService.DoubanItem, onClick: () -> Unit) {
     Column(
-        Modifier.width(100.dp).clickable {},
+        Modifier.width(100.dp).clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             Modifier.size(100.dp, 140.dp).clip(RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Movie, contentDescription = null,
-                tint = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.size(40.dp))
+            if (!item.cover.isNullOrBlank()) {
+                AsyncImage(
+                    model = item.cover,
+                    contentDescription = item.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(Icons.Default.Movie, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.size(40.dp))
+            }
         }
         Spacer(Modifier.height(4.dp))
         Text(item.title, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,

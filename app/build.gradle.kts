@@ -31,8 +31,8 @@ android {
         applicationId = "com.simple.tvboxmobile"
         minSdk = 24     // Compose 友好底线（API 21 太老，依赖库支持更窄）
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.3"
+        versionCode = 4
+        versionName = "1.0.4"
     }
 
     signingConfigs {
@@ -112,6 +112,9 @@ dependencies {
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // Image loading (Coil for Compose)
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // 播放器（Media3 ExoPlayer）
     implementation("androidx.media3:media3-exoplayer:1.3.1")

@@ -36,6 +36,11 @@ class SearchViewModel : ViewModel() {
 
     private var searchJob: Job? = null
 
+    fun setQuery(q: String) {
+        _state.value = _state.value.copy(query = q)
+        search()
+    }
+
     fun onQueryChange(q: String) {
         _state.value = _state.value.copy(query = q)
         search()
