@@ -31,8 +31,8 @@ android {
         applicationId = "com.simple.tvboxmobile"
         minSdk = 24     // Compose 友好底线（API 21 太老，依赖库支持更窄）
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.0.4"
+        versionCode = 5
+        versionName = "1.0.5"
     }
 
     signingConfigs {
