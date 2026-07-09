@@ -2,8 +2,9 @@ package com.simple.tvboxmobile.ui.detail
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -17,23 +18,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-/**
- * 剧集详情页 v1 MVP：单剧集直接跳播放，省去选集 UI。
- * 后续 v1.1 加多剧集 grid + 历史记录。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     siteKey: String,
     videoId: String,
     title: String,
-    onPlay: (String, String, String) -> Unit,
-    onBack: () -> Unit
+    onPlayEpisode: (episodeUrl: String, title: String) -> Unit,
+    onBack: () -> Unit,
+    vm: DetailViewModel = viewModel()
 ) {
+    LaunchedEffect(siteKey, videoId) { vm.load(siteKey, videoId) }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -42,24 +42,64 @@ fun DetailScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(24.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(24.dp))
-            Button(
-                onClick = { onPlay(videoId, siteKey, title) },
-                modifier = Modifier.fillMaxWidth(0.6f)
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("开始播放", fontSize = 18.sp)
+        Column(Modifier.padding(padding).fillMaxSize()) {
+            when {
+                vm.loading.value -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                vm.error.value != null -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("加载失败: ${vm.error.value}", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                vm.episodes.value.isEmpty() -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("没有可播放的剧集")
+                    }
+                }
+                else -> {
+                    Text(
+                        "共 ${vm.episodes.value.size} 集",
+                        Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        contentPadding = PaddingValues(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(vm.episodes.value) { (name, url) ->
+                            EpisodeChip(
+                                name = name,
+                                onClick = { onPlayEpisode(url, title) }
+                            )
+                        }
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun EpisodeChip(name: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null,
+                modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(4.dp))
+            Text(name, fontSize = 13.sp, maxLines = 1, fontWeight = FontWeight.Medium)
         }
     }
 }
