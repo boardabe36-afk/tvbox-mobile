@@ -21,6 +21,12 @@ class HomeViewModel : ViewModel() {
 
     init {
         refresh()
+        // Observe SourceAccess.version changes
+        viewModelScope.launch {
+            SourceAccess.version.collect {
+                refresh()
+            }
+        }
     }
 
     fun refresh() {

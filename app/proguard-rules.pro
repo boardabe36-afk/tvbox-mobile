@@ -27,3 +27,19 @@
 -dontwarn okio.**
 -dontwarn org.conscrypt.**
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+
+
+# Keep Compose + Lifecycle (LocalLifecycleOwner crash fix)
+-keep class androidx.lifecycle.compose.** { *; }
+-keep class androidx.lifecycle.** { *; }
+-keep class androidx.compose.runtime.** { *; }
+-keep class androidx.compose.ui.** { *; }
+-keep class androidx.compose.material3.** { *; }
+-keep class androidx.compose.foundation.** { *; }
+-keep class androidx.navigation.compose.** { *; }
+-keep class androidx.activity.compose.** { *; }
+
+# Keep SpiderSite + VideoItem + VideoClient (reflection via factory)
+-keep class com.simple.tvbox.source.** { *; }
+-keep class com.simple.tvbox.model.** { *; }
+-keep class com.simple.tvbox.util.** { *; }
